@@ -1,34 +1,22 @@
-FROM php:8.2-cli
+FROM php:8.1-fpm
 
-# Instalar dependências do sistema
-RUN apt-get update && apt-get install -y \
-    git unzip curl zip libzip-dev libicu-dev \
-    && docker-php-ext-install intl zip pdo pdo_mysql
-
-# Instalar Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
+# Instalar extensões e Apache
+RUN apt-get update && apt-get install -y libpng-dev libonig-dev libxml2-dev zip unzip git curl libcurl4-openssl-dev pkg-config libssl-dev
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Definir pasta
-WORKDIR /app
+# Configurar diretório de trabalho
+WORKDIR /var/www
 
-# Copiar tudo
-COPY . .
+# Copiar aplicação e instalar dependências
+COPY . /var/www
+RUN composer install --optimize-autoloader --no-dev
 
-# Instalar PHP deps
-RUN composer install --no-dev --optimize-autoloader
+# Configurar permissões
+RUN chown -R www-data:www-data /var/www
 
-# Instalar frontend
-# instalar frontend
-RUN npm cache clean --force \
- && npm ci --legacy-peer-deps \
- && npm run build
-
-# Permissões (IMPORTANTE)
-RUN chmod -R 777 storage bootstrap/cache
-
-# Rodar Laravel
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# Configurar porta e iniciar servidor
+EXPOSE 8000
+CMD php artisan serve --host=0.0.0.0 --port=8000
