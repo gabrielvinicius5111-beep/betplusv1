@@ -1,22 +1,25 @@
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 
-# Instalar extensões e Apache
-RUN apt-get update && apt-get install -y libpng-dev libonig-dev libxml2-dev zip unzip git curl libcurl4-openssl-dev pkg-config libssl-dev
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    zip unzip git curl libzip-dev libicu-dev \
+    && docker-php-ext-install intl zip pdo pdo_mysql
 
-# Instalar Composer
+# Instalar composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configurar diretório de trabalho
-WORKDIR /var/www
+# Copiar projeto
+WORKDIR /app
+COPY . .
 
-# Copiar aplicação e instalar dependências
-COPY . /var/www
-RUN composer install --optimize-autoloader --no-dev
+# Instalar dependências
+RUN composer install --no-dev --optimize-autoloader
 
-# Configurar permissões
-RUN chown -R www-data:www-data /var/www
+# Instalar node
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
 
-# Configurar porta e iniciar servidor
-EXPOSE 8000
-CMD php artisan serve --host=0.0.0.0 --port=8000
+RUN npm install && npm run build
+
+# Rodar servidor
+CMD php artisan serve --host=0.0.0.0 --port=$PORT
