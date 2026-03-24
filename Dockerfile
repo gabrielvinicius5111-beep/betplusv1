@@ -22,9 +22,10 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader
 
 # Instalar frontend
-RUN npm cache clean --force
-RUN npm install --legacy-peer-deps
-RUN npm run build
+# instalar frontend
+RUN npm cache clean --force \
+ && npm ci --legacy-peer-deps \
+ && npm run build
 
 # Permissões (IMPORTANTE)
 RUN chmod -R 777 storage bootstrap/cache
