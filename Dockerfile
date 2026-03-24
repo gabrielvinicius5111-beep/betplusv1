@@ -12,7 +12,7 @@ WORKDIR /var/www
 
 # Copiar aplicação e instalar dependências
 COPY . /var/www
-RUN composer install --optimize-autoloader --no-dev
+# RUN composer install --optimize-autoloader --no-dev
 
 # Configurar permissões
 RUN chown -R www-data:www-data /var/www
